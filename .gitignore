@@ -275,3 +275,4 @@ appdev_analytics/media/
 .ipython/
 .env
 .envs/*
+credentials.json
