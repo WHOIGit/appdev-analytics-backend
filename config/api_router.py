@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
+from appdev_analytics.websites.api.views import WebsiteViewSet
 from appdev_analytics.users.api.views import UserViewSet
 
 if settings.DEBUG:
@@ -8,6 +9,7 @@ if settings.DEBUG:
 else:
     router = SimpleRouter()
 
+router.register("websites", WebsiteViewSet)
 router.register("users", UserViewSet)
 
 

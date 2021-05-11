@@ -1,9 +1,11 @@
-import os
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
-from google.analytics.data_v1beta.types import DateRange
-from google.analytics.data_v1beta.types import Dimension
-from google.analytics.data_v1beta.types import Metric
-from google.analytics.data_v1beta.types import RunReportRequest
+from google.analytics.data_v1beta.types import (
+    DateRange,
+    Dimension,
+    Metric,
+    MetricType,
+    RunReportRequest,
+)
 
 from django.db import models
 
@@ -51,13 +53,33 @@ class Website(models.Model):
         )
         response = client.run_report(request)
 
-        print("Report result:")
+        results = {
+            "dimension_headers": [],
+            "metric_headers": [],
+            "rows": [],
+        }
+
+        for dimensionHeader in response.dimension_headers:
+            results["dimension_headers"].append({"name": dimensionHeader.name})
+            print(f"Dimension header name: {dimensionHeader.name}")
+
+        for metricHeader in response.metric_headers:
+            metric_type = MetricType(metricHeader.type_).name
+            results["metric_headers"].append({"name": metricHeader.name})
+            print(f"Metric header name: {metricHeader.name} ({metric_type})")
+
         for row in response.rows:
+            dimension_values = []
             for dimension_value in row.dimension_values:
+                dimension_values.append({"value": dimension_value.value})
                 print(dimension_value.value)
 
+            metric_values = []
             for metric_value in row.metric_values:
+                metric_values.append({"value": metric_value.value})
                 print(metric_value.value)
             # print(row.dimension_values[0].value, row.metric_values[0].value)
-
-        return response
+            results["rows"].append(
+                {"dimension_values": dimension_values, "metric_values": metric_values}
+            )
+        return results
