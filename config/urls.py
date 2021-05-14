@@ -17,6 +17,7 @@ urlpatterns = [
     path("users/", include("appdev_analytics.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
+    path("websites/", include("appdev_analytics.websites.urls", namespace="websites")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # API URLS

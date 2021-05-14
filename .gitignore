@@ -276,3 +276,4 @@ appdev_analytics/media/
 .env
 .envs/.production/*
 credentials.json
+logs/*

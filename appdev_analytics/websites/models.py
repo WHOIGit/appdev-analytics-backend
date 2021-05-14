@@ -12,7 +12,7 @@ from django.db import models
 
 class Website(models.Model):
     name = models.CharField(max_length=200, unique=False, db_index=True)
-    url = models.URLField(max_length=200, unique=True)
+    domain = models.CharField(max_length=200, unique=True)
     ga4_property_id = models.CharField(max_length=200, unique=True)
 
     class Meta:
