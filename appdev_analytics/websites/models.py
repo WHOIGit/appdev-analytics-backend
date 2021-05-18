@@ -14,8 +14,6 @@ from google.analytics.data_v1beta.types import (
     RunReportRequest,
 )
 
-from .managers import WebsiteQuerySet
-
 INPUT_DIR = "logs"
 lineformat_nginx = re.compile(
     r"""(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(?P<dateandtime>\d{2}\/[a-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] ((\"(GET|POST) )(?P<url>.+)(http\/1\.1")) (?P<statuscode>\d{3}) (?P<bytessent>\d+) (["](?P<refferer>(\-)|(.+))["]) (["](?P<useragent>.+)["])""",
@@ -27,8 +25,6 @@ class Website(models.Model):
     name = models.CharField(max_length=200, unique=False, db_index=True)
     domain = models.CharField(max_length=200, unique=True)
     ga4_property_id = models.CharField(max_length=200, unique=True)
-
-    objects = WebsiteQuerySet.as_manager()
 
     class Meta:
         ordering = ["name"]
@@ -140,16 +136,14 @@ class Website(models.Model):
         new_df = logs_df.groupby(["url", pd.Grouper(key="dateandtime", freq="D")]).agg(
             {"bytessent": "sum"}
         )
-        # logs_df = logs_df.groupby(pd.Grouper(key="dateandtime", freq="D")).sum()
         new_df.columns = ["bytessent"]
         new_df = new_df.reset_index()
-        print(new_df.head())
+
         for index, row in new_df.iterrows():
             datapoint = DataPoint.objects.filter(
                 date_logged=row["dateandtime"].date(), url=row["url"]
             ).last()
-            print(datapoint)
-            print(row["dateandtime"].date(), row["url"], row["bytessent"])
+
             if datapoint:
                 # date/url combination already has a record, need to updated bytes_sent
                 datapoint.bytes_sent = datapoint.bytes_sent + row["bytessent"]

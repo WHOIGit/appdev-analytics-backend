@@ -1,7 +1,7 @@
 import datetime
 from rest_framework import viewsets
-from django.db.models import Prefetch, Count
 from django.utils import timezone
+from django.db.models import Prefetch
 
 from ..models import Website, DataPoint
 from .serializers import WebsiteSerializer, DataPointSerializer

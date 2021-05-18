@@ -61,7 +61,6 @@ class WebsiteSerializer(serializers.ModelSerializer):
             .order_by("date")
         )
 
-        print("COUNT", datapoints_qs)
         total_download_data = []
         for datapoint in datapoints_qs:
             date_str = datapoint["date"].isoformat()
