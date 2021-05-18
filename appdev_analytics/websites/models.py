@@ -3,6 +3,7 @@ import os
 import re
 import pandas as pd
 
+from django.db import models
 from django.utils import timezone
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
@@ -13,7 +14,7 @@ from google.analytics.data_v1beta.types import (
     RunReportRequest,
 )
 
-from django.db import models
+from .managers import WebsiteQuerySet
 
 INPUT_DIR = "logs"
 lineformat_nginx = re.compile(
@@ -26,6 +27,8 @@ class Website(models.Model):
     name = models.CharField(max_length=200, unique=False, db_index=True)
     domain = models.CharField(max_length=200, unique=True)
     ga4_property_id = models.CharField(max_length=200, unique=True)
+
+    objects = WebsiteQuerySet.as_manager()
 
     class Meta:
         ordering = ["name"]
@@ -164,7 +167,7 @@ class Website(models.Model):
 
 class DataPoint(models.Model):
     website = models.ForeignKey(
-        "Website", on_delete=models.CASCADE, related_name="datapoints"
+        Website, on_delete=models.CASCADE, related_name="datapoints"
     )
     date_logged = models.DateField(default=timezone.now)
     url = models.CharField(max_length=1000)
