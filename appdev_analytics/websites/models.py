@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import gzip
 import re
 import pandas as pd
 
@@ -103,8 +104,12 @@ class Website(models.Model):
                 "bytessent": [],
             }
         )
+
         for f in os.listdir(INPUT_DIR):
-            logfile = open(os.path.join(INPUT_DIR, f))
+            if f.endswith(".gz"):
+                logfile = gzip.open(os.path.join(INPUT_DIR, f))
+            else:
+                logfile = open(os.path.join(INPUT_DIR, f))
 
             for line in logfile.readlines():
                 data = re.search(lineformat_nginx, line)

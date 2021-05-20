@@ -1,14 +1,11 @@
-import datetime
-
 from django.db.models import Sum
 from django.db.models.functions import TruncDay
 from django.utils import timezone
 
 from rest_framework import serializers
-from ..models import Website, DataPoint
+from rest_flex_fields import FlexFieldsModelSerializer
 
-default_start_date = timezone.now() - datetime.timedelta(days=90)
-default_end_date = timezone.now()
+from ..models import Website, DataPoint
 
 
 class DataPointSerializer(serializers.ModelSerializer):
@@ -17,7 +14,9 @@ class DataPointSerializer(serializers.ModelSerializer):
         fields = ["date_logged", "url", "bytes_sent"]
 
 
-class WebsiteSerializer(serializers.ModelSerializer):
+class WebsiteSerializer(
+    serializers.HyperlinkedModelSerializer, FlexFieldsModelSerializer
+):
     ga_results = serializers.SerializerMethodField("get_ga_results")
     download_results = serializers.SerializerMethodField("get_download_data")
     total_daily_download_results = serializers.SerializerMethodField(
@@ -28,8 +27,9 @@ class WebsiteSerializer(serializers.ModelSerializer):
         model = Website
         fields = [
             "id",
-            "name",
             "url",
+            "name",
+            "domain",
             "download_results",
             "total_daily_download_results",
             "ga_results",
