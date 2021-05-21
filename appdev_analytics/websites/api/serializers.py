@@ -42,7 +42,7 @@ class WebsiteSerializer(
         dimensions = query_params.get("dimensions", "country")
         dimensions = dimensions.split(",")
         # setup GA API metrics
-        metrics = query_params.get("metrics", "activeUsers")
+        metrics = query_params.get("metrics", "activeUsers,screenPageViews")
         metrics = metrics.split(",")
         # setup GA API start_date
         start_date = query_params.get("start_date", "90daysAgo")
