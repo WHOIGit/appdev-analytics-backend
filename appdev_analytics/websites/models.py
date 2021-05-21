@@ -116,25 +116,30 @@ class Website(models.Model):
                 if data:
                     datadict = data.groupdict()
                     # ip = datadict["ipaddress"]
-                    # Converting string to datetime obj
-                    datetimeobj = datetime.strptime(
-                        datadict["dateandtime"], "%d/%b/%Y:%H:%M:%S %z"
-                    )
-                    url = datadict["url"]
-                    bytessent = datadict["bytessent"]
                     # referrer = datadict["refferer"]
                     # useragent = datadict["useragent"]
                     # status = datadict["statuscode"]
                     # method = data.group(6)
-                    logs_df = logs_df.append(
-                        {
-                            "dateandtime": datetimeobj,
-                            "url": url,
-                            "bytessent": bytessent,
-                        },
-                        ignore_index=True,
-                    )
-                    # logs_df.append([dateandtime, url, bytessent])
+                    print(datadict["statuscode"])
+                    if datadict["statuscode"] == "200":
+                        # Converting string to datetime obj
+                        datetimeobj = datetime.strptime(
+                            datadict["dateandtime"], "%d/%b/%Y:%H:%M:%S %z"
+                        )
+                        # split url on query parameters, remove query
+                        url = datadict["url"].split("?")[0].strip()
+                        bytessent = datadict["bytessent"]
+                        if not url.endswith((".css", ".js", ".ico")):
+                            print(url)
+                            logs_df = logs_df.append(
+                                {
+                                    "dateandtime": datetimeobj,
+                                    "url": url,
+                                    "bytessent": bytessent,
+                                },
+                                ignore_index=True,
+                            )
+
             logfile.close
 
         logs_df["bytessent"] = logs_df["bytessent"].astype(int)
