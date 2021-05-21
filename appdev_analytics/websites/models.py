@@ -107,41 +107,46 @@ class Website(models.Model):
         )
 
         for f in os.listdir(file_dir):
-            if f.endswith(".gz"):
-                logfile = gzip.open(os.path.join(file_dir, f))
-            else:
-                logfile = open(os.path.join(file_dir, f))
+            print("LOG FILE ", os.path.join(file_dir, f))
+            try:
+                if f.endswith(".gz"):
+                    logfile = gzip.open(os.path.join(file_dir, f), "rt")
+                else:
+                    logfile = open(os.path.join(file_dir, f))
 
-            for line in logfile.readlines():
-                data = re.search(lineformat_nginx, line)
-                if data:
-                    datadict = data.groupdict()
-                    # ip = datadict["ipaddress"]
-                    # referrer = datadict["refferer"]
-                    # useragent = datadict["useragent"]
-                    # status = datadict["statuscode"]
-                    # method = data.group(6)
-                    print(datadict["statuscode"])
-                    if datadict["statuscode"] == "200":
-                        # Converting string to datetime obj
-                        datetimeobj = datetime.strptime(
-                            datadict["dateandtime"], "%d/%b/%Y:%H:%M:%S %z"
-                        )
-                        # split url on query parameters, remove query
-                        url = datadict["url"].split("?")[0].strip()
-                        bytessent = datadict["bytessent"]
-                        if not url.endswith((".css", ".js", ".ico")):
-                            print(url)
-                            logs_df = logs_df.append(
-                                {
-                                    "dateandtime": datetimeobj,
-                                    "url": url,
-                                    "bytessent": bytessent,
-                                },
-                                ignore_index=True,
+                for line in logfile.readlines():
+                    data = re.search(lineformat_nginx, line)
+                    if data:
+                        datadict = data.groupdict()
+                        # ip = datadict["ipaddress"]
+                        # referrer = datadict["refferer"]
+                        # useragent = datadict["useragent"]
+                        # status = datadict["statuscode"]
+                        # method = data.group(6)
+                        print(datadict["statuscode"])
+                        if datadict["statuscode"] == "200":
+                            # Converting string to datetime obj
+                            datetimeobj = datetime.strptime(
+                                datadict["dateandtime"], "%d/%b/%Y:%H:%M:%S %z"
                             )
+                            # split url on query parameters, remove query
+                            url = datadict["url"].split("?")[0].strip()
+                            bytessent = datadict["bytessent"]
+                            if not url.endswith((".css", ".js", ".ico")):
+                                print(url)
+                                logs_df = logs_df.append(
+                                    {
+                                        "dateandtime": datetimeobj,
+                                        "url": url,
+                                        "bytessent": bytessent,
+                                    },
+                                    ignore_index=True,
+                                )
 
-            logfile.close
+                logfile.close
+            except Exception as e:
+                print(e)
+                continue
 
         logs_df["bytessent"] = logs_df["bytessent"].astype(int)
         new_df = logs_df.groupby(["url", pd.Grouper(key="dateandtime", freq="D")]).agg(
