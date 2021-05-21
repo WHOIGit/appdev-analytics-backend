@@ -7,3 +7,7 @@
 .pre-commit-config.yaml
 .readthedocs.yml
 .travis.yml
+.envs
+docker-compose-prod.yml
+local.yml
+production.yml

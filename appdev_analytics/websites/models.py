@@ -97,6 +97,7 @@ class Website(models.Model):
         return results
 
     def update_nginx_data(self):
+        file_dir = os.path.join(INPUT_DIR, self.domain)
         logs_df = pd.DataFrame(
             {
                 "dateandtime": [],
@@ -105,11 +106,11 @@ class Website(models.Model):
             }
         )
 
-        for f in os.listdir(INPUT_DIR):
+        for f in os.listdir(file_dir):
             if f.endswith(".gz"):
-                logfile = gzip.open(os.path.join(INPUT_DIR, f))
+                logfile = gzip.open(os.path.join(file_dir, f))
             else:
-                logfile = open(os.path.join(INPUT_DIR, f))
+                logfile = open(os.path.join(file_dir, f))
 
             for line in logfile.readlines():
                 data = re.search(lineformat_nginx, line)

@@ -1,0 +1,68 @@
+version: "3.7"
+
+volumes:
+  production_postgres_data: {}
+  production_postgres_data_backups: {}
+  production_nginx: {}
+  static_volume: {}
+  media_volume: {}
+
+services:
+  django: &django
+    image: ghcr.io/whoigit/appdev-analytics-dataserver:stable
+    container_name: django
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - /mnt/appdev_scratch/logs:/logs:z
+      - static_volume:/app/staticfiles # <-- bind the static files
+      - media_volume:/app/media # <-- bind the media files
+    env_file:
+      - ./.envs/.production/.django
+      - ./.envs/.production/.postgres
+    restart: unless-stopped
+    command: /start
+
+  postgres:
+    image: ghcr.io/whoigit/postgres-docker-scripts:12
+    container_name: postgres
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data
+      - production_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.production/.postgres
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.15
+    container_name: nginx
+    depends_on:
+      - django
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - production_nginx:/var/log/nginx
+    ports:
+      - 8000:80
+    restart: unless-stopped
+
+  redis:
+    image: redis:6.0
+
+  celeryworker:
+    <<: *django
+    container_name: django_celeryworker
+    depends_on:
+      - redis
+      - postgres
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    container_name: django_celerybeat
+    <<: *django
+    depends_on:
+      - redis
+      - postgres
+    ports: []
+    command: /start-celerybeat
