@@ -15,7 +15,7 @@ services:
       - postgres
       - redis
     volumes:
-      - /mnt/appdev_scratch/logs:/logs:z
+      - /mnt/appdev_scratch/logs:/app/logs:z
       #- static_volume:/app/staticfiles # <-- bind the static files
       #- media_volume:/app/media # <-- bind the media files
     env_file:

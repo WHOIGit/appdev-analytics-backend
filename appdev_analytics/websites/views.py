@@ -6,6 +6,7 @@ from .models import Website
 
 
 def parse_nginx_to_pandas(request):
-    site = Website.objects.get(id=1)
-    site.update_nginx_data()
-    return HttpResponse("Cool stuff")
+    sites = Website.objects.all()
+    for site in sites:
+        site.update_nginx_data()
+    return HttpResponse("Log parsing complete")

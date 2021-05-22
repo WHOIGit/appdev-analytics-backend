@@ -123,7 +123,6 @@ class Website(models.Model):
                         # useragent = datadict["useragent"]
                         # status = datadict["statuscode"]
                         # method = data.group(6)
-                        print(datadict["statuscode"])
                         if datadict["statuscode"] == "200":
                             # Converting string to datetime obj
                             datetimeobj = datetime.strptime(
@@ -133,7 +132,6 @@ class Website(models.Model):
                             url = datadict["url"].split("?")[0].strip()
                             bytessent = datadict["bytessent"]
                             if not url.endswith((".css", ".js", ".ico")):
-                                print(url)
                                 logs_df = logs_df.append(
                                     {
                                         "dateandtime": datetimeobj,
@@ -150,19 +148,24 @@ class Website(models.Model):
 
         logs_df["bytessent"] = logs_df["bytessent"].astype(int)
         new_df = logs_df.groupby(["url", pd.Grouper(key="dateandtime", freq="D")]).agg(
-            {"bytessent": "sum"}
+            {
+                "bytessent": "sum",
+                "dateandtime": "count",
+            }
         )
-        new_df.columns = ["bytessent"]
+        new_df.columns = ["bytessent", "hits"]
         new_df = new_df.reset_index()
 
         for index, row in new_df.iterrows():
+            print(row)
             datapoint = DataPoint.objects.filter(
                 date_logged=row["dateandtime"].date(), url=row["url"]
             ).last()
 
             if datapoint:
-                # date/url combination already has a record, need to updated bytes_sent
+                # date/url combination already has a record, need to update bytes_sent/hits
                 datapoint.bytes_sent = datapoint.bytes_sent + row["bytessent"]
+                datapoint.hits = datapoint.hits + row["hits"]
                 datapoint.save()
             else:
                 # else create new Datapoint
@@ -171,6 +174,7 @@ class Website(models.Model):
                     date_logged=row["dateandtime"].date(),
                     url=row["url"],
                     bytes_sent=row["bytessent"],
+                    hits=row["hits"],
                 )
         return "Data points updated"
 
@@ -182,6 +186,7 @@ class DataPoint(models.Model):
     date_logged = models.DateField(default=timezone.now)
     url = models.CharField(max_length=1000)
     bytes_sent = models.PositiveBigIntegerField()
+    hits = models.PositiveIntegerField()
 
     class Meta:
         ordering = ["date_logged"]
