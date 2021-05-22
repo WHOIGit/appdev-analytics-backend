@@ -58,6 +58,7 @@ class WebsiteSerializer(
             datapoints_qs.annotate(date=TruncDay("date_logged"))
             .values("date")
             .annotate(bytes_sent_total=Sum("bytes_sent"))
+            .annotate(hits_total=Sum("hits"))
             .order_by("date")
         )
 
@@ -67,6 +68,7 @@ class WebsiteSerializer(
             data_obj = {
                 "date": date_str,
                 "bytes_sent": datapoint["bytes_sent_total"],
+                "hits": datapoint["hits_total"],
             }
             total_download_data.append(data_obj)
         return total_download_data
@@ -87,6 +89,7 @@ class WebsiteSerializer(
                 "date": date_str,
                 "url": datapoint.url,
                 "bytes_sent": datapoint.bytes_sent,
+                "hits": datapoint.hits,
             }
             download_data.append(data_obj)
 
