@@ -112,11 +112,8 @@ class Website(models.Model):
                 logfile = None
                 if f.endswith(".gz"):
                     logfile = gzip.open(os.path.join(file_dir, f), "rt")
-                elif os.stat("f").st_size != 0:
+                else:
                     logfile = open(os.path.join(file_dir, f))
-
-                if not logfile:
-                    continue
 
                 for line in logfile.readlines():
                     data = re.search(lineformat_nginx, line)
@@ -150,7 +147,7 @@ class Website(models.Model):
                 print(e)
                 continue
 
-        if not logs_df.empty():
+        if not logs_df.empty:
             logs_df["bytessent"] = logs_df["bytessent"].astype(int)
             new_df = logs_df.groupby(
                 ["url", pd.Grouper(key="dateandtime", freq="D")]
