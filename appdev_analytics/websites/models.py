@@ -109,10 +109,14 @@ class Website(models.Model):
         for f in os.listdir(file_dir):
             print("LOG FILE ", os.path.join(file_dir, f))
             try:
+                logfile = None
                 if f.endswith(".gz"):
                     logfile = gzip.open(os.path.join(file_dir, f), "rt")
-                else:
+                elif os.stat("f").st_size != 0:
                     logfile = open(os.path.join(file_dir, f))
+
+                if not logfile:
+                    continue
 
                 for line in logfile.readlines():
                     data = re.search(lineformat_nginx, line)
@@ -131,7 +135,7 @@ class Website(models.Model):
                             # split url on query parameters, remove query
                             url = datadict["url"].split("?")[0].strip()
                             bytessent = datadict["bytessent"]
-                            if not url.endswith((".css", ".js", ".ico")):
+                            if not url.endswith((".css", ".js", ".ico", ".map")):
                                 logs_df = logs_df.append(
                                     {
                                         "dateandtime": datetimeobj,
