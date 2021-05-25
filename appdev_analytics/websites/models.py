@@ -16,6 +16,34 @@ from google.analytics.data_v1beta.types import (
 )
 
 INPUT_DIR = "logs"
+
+HOST = r"^(?P<host>.*?)"
+SPACE = r"\s"
+IDENTITY = r"\S+"
+USER = r"\S+"
+TIME = r"(?P<dateandtime>\[.*?\])"
+REQUEST = r"\"(?P<url>.*?)\""
+STATUS = r"(?P<statuscode>\d{3})"
+SIZE = r"(?P<bytessent>\S+)"
+
+REGEX = (
+    HOST
+    + SPACE
+    + IDENTITY
+    + SPACE
+    + USER
+    + SPACE
+    + TIME
+    + SPACE
+    + REQUEST
+    + SPACE
+    + STATUS
+    + SPACE
+    + SIZE
+    + SPACE
+)
+
+lineformat_apache = re.compile(REGEX)
 lineformat_nginx = re.compile(
     r"""(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(?P<dateandtime>\d{2}\/[a-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] ((\"(GET|POST) )(?P<url>.+)(http\/1\.1")) (?P<statuscode>\d{3}) (?P<bytessent>\d+) (["](?P<refferer>(\-)|(.+))["]) (["](?P<useragent>.+)["])""",
     re.IGNORECASE,
@@ -23,9 +51,16 @@ lineformat_nginx = re.compile(
 
 
 class Website(models.Model):
+    class LogType(models.TextChoices):
+        APACHE = "1", "Apache"
+        NGINX = "2", "NGINX"
+
     name = models.CharField(max_length=200, unique=False, db_index=True)
     domain = models.CharField(max_length=200, unique=True)
     ga4_property_id = models.CharField(max_length=200, unique=True)
+    log_type = models.CharField(
+        max_length=32, choices=LogType.choices, default=LogType.APACHE
+    )
 
     class Meta:
         ordering = ["name"]
@@ -63,13 +98,18 @@ class Website(models.Model):
             metrics=metrics_formatted,
             date_ranges=[DateRange(start_date=start_date, end_date=end_date)],
         )
-        response = client.run_report(request)
 
         results = {
             "dimension_headers": [],
             "metric_headers": [],
             "rows": [],
         }
+
+        try:
+            response = client.run_report(request)
+        except Exception as e:
+            print(e)
+            return results
 
         for dimensionHeader in response.dimension_headers:
             results["dimension_headers"].append({"name": dimensionHeader.name})
@@ -96,8 +136,14 @@ class Website(models.Model):
             )
         return results
 
-    def update_nginx_data(self):
+    def update_download_data(self):
         file_dir = os.path.join(INPUT_DIR, self.domain)
+
+        if self.log_type == self.LogType.APACHE:
+            lineformat = lineformat_apache
+        elif self.log_type == self.LogType.NGINX:
+            lineformat = lineformat_nginx
+
         logs_df = pd.DataFrame(
             {
                 "dateandtime": [],
@@ -116,7 +162,7 @@ class Website(models.Model):
                     logfile = open(os.path.join(file_dir, f))
 
                 for line in logfile.readlines():
-                    data = re.search(lineformat_nginx, line)
+                    data = re.search(lineformat, line)
                     if data:
                         datadict = data.groupdict()
                         # ip = datadict["ipaddress"]
@@ -125,14 +171,35 @@ class Website(models.Model):
                         # status = datadict["statuscode"]
                         # method = data.group(6)
                         if datadict["statuscode"] == "200":
-                            # Converting string to datetime obj
-                            datetimeobj = datetime.strptime(
-                                datadict["dateandtime"], "%d/%b/%Y:%H:%M:%S %z"
+                            print(
+                                datadict["dateandtime"]
+                                .replace("[", "")
+                                .replace("]", "")
                             )
+                            print(datadict["url"])
+                            print(datadict["bytessent"])
+                            # Converting string to datetime obj
+                            datetimeobj = (
+                                datadict["dateandtime"]
+                                .replace("[", "")
+                                .replace("]", "")
+                            )
+                            datetimeobj = datetime.strptime(
+                                datetimeobj, "%d/%b/%Y:%H:%M:%S %z"
+                            )
+
+                            url = datadict["url"].strip()
+
+                            if self.log_type == self.LogType.APACHE:
+                                url = datadict["url"].split(" ")[1]
+                                print(url)
                             # split url on query parameters, remove query
-                            url = datadict["url"].split("?")[0].strip()
+                            url = url.split("?")[0]
                             bytessent = datadict["bytessent"]
-                            if not url.endswith((".css", ".js", ".ico", ".map")):
+
+                            if not url.endswith(
+                                (".css", ".js", ".ico", ".map", ".php")
+                            ):
                                 logs_df = logs_df.append(
                                     {
                                         "dateandtime": datetimeobj,
@@ -144,7 +211,7 @@ class Website(models.Model):
 
                 logfile.close
             except Exception as e:
-                print(e)
+                print("ERROR ", e)
                 continue
 
         if not logs_df.empty:
