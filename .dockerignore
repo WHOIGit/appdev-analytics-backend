@@ -12,3 +12,4 @@ docker-compose-prod.yml
 local.yml
 production.yml
 logs
+celerybeat.pid

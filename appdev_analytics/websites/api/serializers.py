@@ -1,6 +1,6 @@
+import datetime
 from django.db.models import Sum
 from django.db.models.functions import TruncDay
-from django.utils import timezone
 
 from rest_framework import serializers
 from rest_flex_fields import FlexFieldsModelSerializer
@@ -63,8 +63,12 @@ class WebsiteSerializer(
         )
 
         total_download_data = []
+        # add 12 hours to handle JS timezone weirdness in charts
+        hours_added = datetime.timedelta(hours=12)
+
         for datapoint in datapoints_qs:
-            date_str = datapoint["date"].isoformat()
+            new_date = datapoint["date"] + hours_added
+            date_str = new_date.isoformat()
             data_obj = {
                 "date": date_str,
                 "bytes_sent": datapoint["bytes_sent_total"],
@@ -82,9 +86,12 @@ class WebsiteSerializer(
         # Otherwise create the datapoint series
         datapoints_qs = obj.datapoints.all()
         download_data = []
+        # add 12 hours to handle JS timezone weirdness in charts
+        hours_added = datetime.timedelta(hours=12)
 
         for datapoint in datapoints_qs:
-            date_str = datapoint.date_logged.isoformat()
+            new_date = datapoint.date_logged + hours_added
+            date_str = new_date.isoformat()
             data_obj = {
                 "date": date_str,
                 "url": datapoint.url,

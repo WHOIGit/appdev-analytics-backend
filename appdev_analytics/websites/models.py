@@ -254,7 +254,7 @@ class DataPoint(models.Model):
     website = models.ForeignKey(
         Website, on_delete=models.CASCADE, related_name="datapoints"
     )
-    date_logged = models.DateField(default=timezone.now)
+    date_logged = models.DateTimeField(default=timezone.now)
     url = models.CharField(max_length=1000)
     bytes_sent = models.PositiveBigIntegerField()
     hits = models.PositiveIntegerField()
