@@ -8,5 +8,6 @@ from .models import Website
 def parse_nginx_to_pandas(request):
     sites = Website.objects.all()
     for site in sites:
-        site.update_download_data()
+        if site.is_active:
+            site.update_download_data()
     return HttpResponse("Log parsing complete")

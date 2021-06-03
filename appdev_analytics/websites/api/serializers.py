@@ -33,6 +33,7 @@ class WebsiteSerializer(
             "download_results",
             "total_daily_download_results",
             "ga_results",
+            "is_active",
         ]
         extra_kwargs = {"url": {"view_name": "api:websites-detail"}}
 

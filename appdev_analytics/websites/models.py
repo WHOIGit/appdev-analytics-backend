@@ -57,10 +57,11 @@ class Website(models.Model):
 
     name = models.CharField(max_length=200, unique=False, db_index=True)
     domain = models.CharField(max_length=200, unique=True)
-    ga4_property_id = models.CharField(max_length=200, unique=True)
+    ga4_property_id = models.CharField(max_length=200, blank=True)
     log_type = models.CharField(
         max_length=32, choices=LogType.choices, default=LogType.APACHE
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["name"]
