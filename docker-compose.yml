@@ -23,6 +23,13 @@ services:
       - ./.envs/.production/.postgres
     restart: unless-stopped
     command: /start
+    ports:
+      - 8000:8000
+    # add this compose file to the Traefik reverse proxy network
+    labels:
+      - "traefik.http.routers.django-backend.rule=Host(`appdev-analytics.whoi.edu`) && PathPrefix(`/backend`)"
+      - "traefik.http.routers.django-backend.tls=true"
+      #- "traefik.http.middlewares.django-headers.headers.customrequestheaders.X-Script-Name=/backend"
 
   postgres:
     image: ghcr.io/whoigit/postgres-docker-scripts:12
@@ -32,18 +39,6 @@ services:
       - production_postgres_data_backups:/backups
     env_file:
       - ./.envs/.production/.postgres
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:1.15
-    container_name: nginx
-    depends_on:
-      - django
-    volumes:
-      - ./nginx:/etc/nginx/conf.d:ro
-      - production_nginx:/var/log/nginx
-    ports:
-      - 8000:80
     restart: unless-stopped
 
   redis:
@@ -66,3 +61,8 @@ services:
       - postgres
     ports: []
     command: /start-celerybeat
+
+networks:
+  default:
+    external:
+      name: proxy-network
