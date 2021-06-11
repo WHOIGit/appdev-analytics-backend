@@ -4,24 +4,29 @@ from django.utils import timezone
 from django.db.models import Prefetch
 
 from ..models import Website, DataPoint
-from .serializers import WebsiteSerializer, DataPointSerializer
+from .serializers import WebsiteListSerializer, WebsiteDetailSerializer
 
 default_start_date = timezone.now() - datetime.timedelta(days=90)
 default_end_date = timezone.now()
 
 
 class WebsiteViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    A viewset that provides Read Only actions
-    """
-
-    serializer_class = WebsiteSerializer
+    serializer_class = WebsiteListSerializer
+    detail_serializer_class = WebsiteDetailSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         # context["django_url_arg"] = self.kwargs['django_url_arg']
         context["query_params"] = self.request.query_params
         return context
+
+    # return different sets of fields if the request is list all or retrieve one,
+    # so use two different serializers
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            if hasattr(self, "detail_serializer_class"):
+                return self.detail_serializer_class
+        return super(WebsiteViewSet, self).get_serializer_class()
 
     def get_queryset(self):
         queryset = Website.objects.all()
@@ -45,12 +50,3 @@ class WebsiteViewSet(viewsets.ReadOnlyModelViewSet):
             )
         )
         return queryset
-
-
-class DataPointViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    A viewset that provides Read Only actions
-    """
-
-    queryset = DataPoint.objects.all()
-    serializer_class = DataPointSerializer

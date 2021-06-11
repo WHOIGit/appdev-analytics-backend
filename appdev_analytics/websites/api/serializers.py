@@ -8,17 +8,10 @@ from rest_flex_fields import FlexFieldsModelSerializer
 from ..models import Website, DataPoint
 
 
-class DataPointSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DataPoint
-        fields = ["date_logged", "url", "bytes_sent"]
-
-
-class WebsiteSerializer(
+class WebsiteListSerializer(
     serializers.HyperlinkedModelSerializer, FlexFieldsModelSerializer
 ):
     ga_results = serializers.SerializerMethodField("get_ga_results")
-    download_results = serializers.SerializerMethodField("get_download_data")
     total_daily_download_results = serializers.SerializerMethodField(
         "get_total_daily_download_data"
     )
@@ -30,7 +23,6 @@ class WebsiteSerializer(
             "url",
             "name",
             "domain",
-            "download_results",
             "total_daily_download_results",
             "ga_results",
             "is_active",
@@ -78,10 +70,19 @@ class WebsiteSerializer(
             total_download_data.append(data_obj)
         return total_download_data
 
-    def get_download_data(self, obj):
+
+class WebsiteDetailSerializer(WebsiteListSerializer):
+    download_results = serializers.SerializerMethodField("get_download_results")
+
+    class Meta(WebsiteListSerializer.Meta):
+        fields = WebsiteListSerializer.Meta.fields + [
+            "download_results",
+        ]
+
+    def get_download_results(self, obj):
         # Check if user wants to exclude datapoints
-        exclude_dataseries = self.context.get("exclude_dataseries")
-        if exclude_dataseries:
+        exclude_download_results = self.context.get("exclude_download_results")
+        if exclude_download_results:
             return None
 
         # Otherwise create the datapoint series
