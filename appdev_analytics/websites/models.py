@@ -114,23 +114,20 @@ class Website(models.Model):
 
         for dimensionHeader in response.dimension_headers:
             results["dimension_headers"].append({"name": dimensionHeader.name})
-            print(f"Dimension header name: {dimensionHeader.name}")
 
         for metricHeader in response.metric_headers:
             metric_type = MetricType(metricHeader.type_).name
             results["metric_headers"].append({"name": metricHeader.name})
-            print(f"Metric header name: {metricHeader.name} ({metric_type})")
 
         for row in response.rows:
             dimension_values = []
             for dimension_value in row.dimension_values:
                 dimension_values.append({"value": dimension_value.value})
-                print(dimension_value.value)
 
             metric_values = []
             for metric_value in row.metric_values:
                 metric_values.append({"value": metric_value.value})
-                print(metric_value.value)
+
             # print(row.dimension_values[0].value, row.metric_values[0].value)
             results["rows"].append(
                 {"dimension_values": dimension_values, "metric_values": metric_values}
@@ -172,13 +169,6 @@ class Website(models.Model):
                         # status = datadict["statuscode"]
                         # method = data.group(6)
                         if datadict["statuscode"] == "200":
-                            print(
-                                datadict["dateandtime"]
-                                .replace("[", "")
-                                .replace("]", "")
-                            )
-                            print(datadict["url"])
-                            print(datadict["bytessent"])
                             # Converting string to datetime obj
                             datetimeobj = (
                                 datadict["dateandtime"]
@@ -193,7 +183,6 @@ class Website(models.Model):
 
                             if self.log_type == self.LogType.APACHE:
                                 url = datadict["url"].split(" ")[1]
-                                print(url)
                             # split url on query parameters, remove query
                             url = url.split("?")[0]
                             bytessent = datadict["bytessent"]
@@ -229,7 +218,6 @@ class Website(models.Model):
             new_df = new_df.reset_index()
 
             for index, row in new_df.iterrows():
-                print(row)
                 datapoint = DataPoint.objects.filter(
                     date_logged=row["dateandtime"].date(), url=row["url"]
                 ).last()
