@@ -38,9 +38,9 @@ class WebsiteListSerializer(
         metrics = query_params.get("metrics", "activeUsers,screenPageViews")
         metrics = metrics.split(",")
         # setup GA API start_date
-        start_date = query_params.get("start_date", "90daysAgo")
+        start_date = query_params.get("startDate", "90daysAgo")
         # setup GA API start_date
-        end_date = query_params.get("end_date", "today")
+        end_date = query_params.get("endDate", "today")
 
         return obj.get_ga4_data(dimensions, metrics, start_date, end_date)
 

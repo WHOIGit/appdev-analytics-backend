@@ -16,7 +16,6 @@ class WebsiteViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        # context["django_url_arg"] = self.kwargs['django_url_arg']
         context["query_params"] = self.request.query_params
         return context
 
@@ -30,8 +29,8 @@ class WebsiteViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = Website.objects.all()
-        start_date = self.request.query_params.get("start_date", None)
-        end_date = self.request.query_params.get("end_date", None)
+        start_date = self.request.query_params.get("startDate", None)
+        end_date = self.request.query_params.get("endDate", None)
 
         start_date_obj = default_start_date
         if start_date:
@@ -50,3 +49,18 @@ class WebsiteViewSet(viewsets.ReadOnlyModelViewSet):
             )
         )
         return queryset
+
+    def get_ga_results(self, obj):
+        query_params = self.request.query_params
+        # setup GA API dimensions
+        dimensions = query_params.get("dimensions", "country")
+        dimensions = dimensions.split(",")
+        # setup GA API metrics
+        metrics = query_params.get("metrics", "activeUsers,screenPageViews")
+        metrics = metrics.split(",")
+        # setup GA API start_date
+        start_date = query_params.get("startDate", "90daysAgo")
+        # setup GA API start_date
+        end_date = query_params.get("endDate", "today")
+
+        return obj.get_ga4_data(dimensions, metrics, start_date, end_date)
