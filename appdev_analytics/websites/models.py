@@ -185,7 +185,12 @@ class Website(models.Model):
                                 url = datadict["url"].split(" ")[1]
                             # split url on query parameters, remove query
                             url = url.split("?")[0]
-                            bytessent = datadict["bytessent"]
+                            # check that bytes is an integer
+                            try:
+                                bytessent = int(datadict["bytessent"])
+                            except Exception as e:
+                                print("ERROR ", e)
+                                continue
 
                             if not url.endswith(
                                 (".css", ".js", ".ico", ".map", ".php")
