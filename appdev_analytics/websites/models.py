@@ -161,10 +161,8 @@ class Website(models.Model):
 
                 for line in logfile.readlines():
                     data = re.search(lineformat, line)
-                    print(data)
                     if data:
                         datadict = data.groupdict()
-                        print(datadict)
                         # ip = datadict["ipaddress"]
                         # referrer = datadict["refferer"]
                         # useragent = datadict["useragent"]
