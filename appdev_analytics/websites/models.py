@@ -45,7 +45,7 @@ REGEX = (
 
 lineformat_apache = re.compile(REGEX)
 lineformat_nginx = re.compile(
-    r"""(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(?P<dateandtime>\d{2}\/[a-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] ((\"(GET|POST) )(?P<url>.+)(http\/1\.1")) (?P<statuscode>\d{3}) (?P<bytessent>\d+) (["](?P<refferer>(\-)|(.+))["]) (["](?P<useragent>.+)["])""",
+    r"""(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(?P<dateandtime>\d{2}\/[a-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] ((\"(GET|POST) )(?P<url>.+)(http\S+")) (?P<statuscode>\d{3}) (?P<bytessent>\d+) (["](?P<refferer>(\-)|(.+))["]) (["](?P<useragent>.+)["])""",
     re.IGNORECASE,
 )
 
@@ -161,14 +161,21 @@ class Website(models.Model):
 
                 for line in logfile.readlines():
                     data = re.search(lineformat, line)
+                    print(data)
                     if data:
                         datadict = data.groupdict()
+                        print(datadict)
                         # ip = datadict["ipaddress"]
                         # referrer = datadict["refferer"]
                         # useragent = datadict["useragent"]
                         # status = datadict["statuscode"]
                         # method = data.group(6)
                         if datadict["statuscode"] == "200":
+                            # check that bytes is an integer
+                            try:
+                                bytessent = int(datadict["bytessent"])
+                            except Exception as e:
+                                continue
                             # Converting string to datetime obj
                             datetimeobj = (
                                 datadict["dateandtime"]
@@ -185,12 +192,6 @@ class Website(models.Model):
                                 url = datadict["url"].split(" ")[1]
                             # split url on query parameters, remove query
                             url = url.split("?")[0]
-                            # check that bytes is an integer
-                            try:
-                                bytessent = int(datadict["bytessent"])
-                            except Exception as e:
-                                print("ERROR ", e)
-                                continue
 
                             if not url.endswith(
                                 (".css", ".js", ".ico", ".map", ".php")
@@ -223,7 +224,7 @@ class Website(models.Model):
             new_df = new_df.reset_index()
 
             for index, row in new_df.iterrows():
-                datapoint = DataPoint.objects.filter(
+                datapoint = self.datapoints.filter(
                     date_logged=row["dateandtime"].date(), url=row["url"]
                 ).last()
 
