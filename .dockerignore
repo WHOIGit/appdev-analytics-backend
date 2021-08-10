@@ -12,4 +12,5 @@ docker-compose-prod.yml
 local.yml
 production.yml
 logs
+s3-logs
 celerybeat.pid

@@ -15,3 +15,10 @@ CELERY_FLOWER_PASSWORD=UDml2gHyXAbH8rKE3ZpEc1ENCcTy53kNpVi9uDaC14W6FddeP7M81TWM2
 
 # Google
 GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+
+# AWS
+# ------------------------------------------------------------------------------
+AWS_ACCESS_KEY_ID=AKIAXN4XLDCOVK237C6R
+AWS_SECRET_ACCESS_KEY=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
+AWS_STORAGE_BUCKET_NAME=appdev.analytics.logs
+AWS_S3_REGION_NAME=us-east-1

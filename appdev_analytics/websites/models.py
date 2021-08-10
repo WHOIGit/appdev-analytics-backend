@@ -3,6 +3,8 @@ import os
 import gzip
 import re
 import pandas as pd
+import boto3
+from pathlib import Path
 
 from django.db import models
 from django.utils import timezone
@@ -14,8 +16,9 @@ from google.analytics.data_v1beta.types import (
     MetricType,
     RunReportRequest,
 )
+from config.settings.base import env
 
-INPUT_DIR = "logs"
+LOGS_DIR = "s3-logs"
 
 HOST = r"^(?P<host>.*?)"
 SPACE = r"\s"
@@ -135,8 +138,21 @@ class Website(models.Model):
         return results
 
     def update_download_data(self):
-        file_dir = os.path.join(INPUT_DIR, self.domain)
+        file_dir = os.path.join(LOGS_DIR, self.domain)
+        # create site domain dir if not exists
+        Path(file_dir).mkdir(parents=True, exist_ok=True)
+        # get the latest log file from AWS
+        s3 = boto3.resource("s3")
+        bucket = s3.Bucket(env("AWS_STORAGE_BUCKET_NAME"))
+        objects = bucket.objects.filter(Prefix=f"{self.domain}/")
 
+        for obj in objects:
+            print(obj)
+            if obj.key.endswith((".log", ".gz")):
+                path, filename = os.path.split(obj.key)
+                bucket.download_file(obj.key, f"{file_dir}/{filename}")
+
+        # process logs
         if self.log_type == self.LogType.APACHE:
             lineformat = lineformat_apache
         elif self.log_type == self.LogType.NGINX:
