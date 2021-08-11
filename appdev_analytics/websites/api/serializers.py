@@ -5,7 +5,7 @@ from django.db.models.functions import TruncDay
 from rest_framework import serializers
 from rest_flex_fields import FlexFieldsModelSerializer
 
-from ..models import Website, DataPoint
+from ..models import Website
 
 
 class WebsiteListSerializer(
@@ -45,10 +45,10 @@ class WebsiteListSerializer(
         return obj.get_ga4_data(dimensions, metrics, start_date, end_date)
 
     def get_total_daily_download_data(self, obj):
-        datapoints_qs = obj.datapoints.all()
+        # datapoints_qs = obj.datapoints.all()
         # group download date by Day, get sum of all downloads
         datapoints_qs = (
-            datapoints_qs.annotate(date=TruncDay("date_logged"))
+            obj.datapoints.annotate(date=TruncDay("date_logged"))
             .values("date")
             .annotate(bytes_sent_total=Sum("bytes_sent"))
             .annotate(hits_total=Sum("hits"))

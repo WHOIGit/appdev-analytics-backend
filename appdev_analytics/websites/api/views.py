@@ -48,6 +48,7 @@ class WebsiteViewSet(viewsets.ReadOnlyModelViewSet):
                 ),
             )
         )
+
         return queryset
 
     def get_ga_results(self, obj):
